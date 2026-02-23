@@ -73,10 +73,8 @@
   .val-unit { font-weight: 800; font-size: 1.2em; }
   .c-text { color: var(--crit-color); }
   .f-text { color: var(--hp-red); }
-  .zero-text { color: #444; }
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
   .skill-tag { background: #383a40; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-  .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -88,8 +86,9 @@
     <div class="guide-header" onclick="toggleGuide()"><span>✦ つかいかた</span><span id="guideArrow">▼</span></div>
     <div class="guide-content" id="guideContent">
       <ul style="margin:0; padding-left:20px; font-size:0.85em;">
-        <li>CC / CCB / 1d100 を振った人だけを抽出します。</li>
-        <li>[info][other]タブは自動で除外されます。</li>
+        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
+        <li><b>掃除済みログを保存</b>：「削除済」と空白発言を消去したログを保存します。</li>
+        <li><b>会話ログを保存</b>：systemメッセージ、削除済、空白発言を消して保存します。</li>
       </ul>
     </div>
   </div>
@@ -126,7 +125,6 @@
 
   let originalHtml = "", diceUsers = new Set(), currentFileName = "";
   const tabExcludeRegex = /\[info\]|\[other\]/i;
-  // ダイス判定正規表現 (CC/CCB もしくは数字d数字 があって、かつ ＞ があるもの)
   const diceStrictRegex = /(\bCC\b|\bCCB\b|\d+d\d+).*＞/i;
 
   function isPracticallyEmpty(element) {
@@ -173,13 +171,9 @@
     doc.querySelectorAll('p').forEach(p => {
       const spans = p.querySelectorAll('span');
       if (spans.length < 2) return;
-      if (tabExcludeRegex.test(spans[0].innerText)) return; // [info][other]除外
-
+      if (tabExcludeRegex.test(spans[0].innerText)) return;
       const text = p.innerText.trim();
-      // system発言は名前リストには入れない
       if (text.startsWith('system :')) return;
-
-      // 実際にダイスを振った人だけを抽出対象にする
       const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/i);
       if (dM && dM[1] && diceStrictRegex.test(dM[2])) {
         diceUsers.add(dM[1].trim());
@@ -211,7 +205,6 @@
     doc.querySelectorAll('p').forEach(p => {
       const spans = p.querySelectorAll('span');
       if (spans.length < 2 || tabExcludeRegex.test(spans[0].innerText)) return;
-
       const lastSpan = spans[spans.length - 1];
       const rawText = p.innerText.replace(/\s+/g, ' ');
       const cM = rawText.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/);
@@ -292,7 +285,7 @@
     let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
     sL.forEach(([n, data]) => {
       const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
-      sH += `<tr><td><span class="skill-tag">${n}</span></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
+      sH += `<tr><td><span class="skill-tag">${n}</span></td><td class="pc-only">${topUser}</td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
     });
     document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
   }
