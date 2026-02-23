@@ -12,14 +12,14 @@
   :root {
     --bg-dark: #1e1f22;
     --card-bg: #2b2d31;
-    --accent: #F50057; /* 指定のピンクカラー */
+    --accent: #C5373C;
+    --line-pink: #F50057;
     --text-main: #dbdee1;
     --text-sub: #b5bac1;
     --hp-red: #ff5252;
     --san-blue: #00a0e9;
     --btn-done: #4f545c;
     --crit-color: #00e676;
-    --skill-purple: #9b59b6;
   }
 
   body { font-family: 'Noto Sans JP', sans-serif; line-height: 1.6; max-width: 1200px; margin: 20px auto; padding: 0 15px; background-color: var(--bg-dark); color: var(--text-main); }
@@ -32,7 +32,7 @@
   .file-input-area { border: 2px dashed #4f545c; padding: 30px 20px; border-radius: 8px; background: #313338; cursor: pointer; margin-bottom: 20px; }
   input[type="file"] { display: none; }
   .file-label { color: var(--accent); text-decoration: underline; font-weight: bold; }
-  .file-info-box { font-size: 0.85em; color: var(--accent); margin: 20px auto 0; background: rgba(245, 0, 87, 0.1); padding: 12px; border-radius: 6px; border-left: 4px solid var(--accent); max-width: 500px; text-align: left; display: none; }
+  .file-info-box { font-size: 0.85em; color: var(--accent); margin: 20px auto 0; background: rgba(197, 55, 60, 0.1); padding: 12px; border-radius: 6px; border-left: 4px solid var(--accent); max-width: 500px; text-align: left; display: none; }
   .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
   .btn { display: inline-block; padding: 10px 25px; font-size: 14px; cursor: pointer; background-color: var(--accent); color: white; border: none; border-radius: 25px; font-weight: bold; transition: 0.2s; }
   .btn:disabled { background-color: #4f545c; opacity: 0.5; }
@@ -59,19 +59,8 @@
     .bar-container { display: none; }
     #diceTableWrapper .pc-only { display: none; }
     #diceTableWrapper .sp-only { display: block; }
-    
-    .dice-count-cell {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-    .sp-avg-text {
-      font-size: 0.75em;
-      color: var(--text-sub);
-      font-weight: normal;
-    }
-
+    .dice-count-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .sp-avg-text { font-size: 0.75em; color: var(--text-sub); font-weight: normal; }
     #skillTableWrapper .pc-only { display: table-cell !important; }
     #skillTableWrapper .sp-only { display: none !important; }
     .stats-card { padding: 15px; }
@@ -90,7 +79,7 @@
   .f-text { color: var(--hp-red); }
   .zero-text { color: #444; }
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-  .skill-tag { background: #383a40; color: var(--skill-purple); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+  .skill-tag { background: #383a40; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
   .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sub-val { color: var(--text-sub); font-size: 0.85em; }
 </style>
@@ -138,15 +127,15 @@
 
 <div id="statsArea">
   <div class="stats-row row-top">
-    <div class="stats-card"><h3>🎲 ダイス統計</h3><div id="diceTableWrapper"></div></div>
+    <div class="stats-card"><h3> ダイス統計</h3><div id="diceTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3>💔 HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
-    <div class="stats-card"><h3>🧠 SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+    <div class="stats-card"><h3> HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
+    <div class="stats-card"><h3> SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3>💬 チャット回数</h3><div id="chatTableWrapper"></div></div>
-    <div class="stats-card"><h3>✨ 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+    <div class="stats-card"><h3> チャット回数</h3><div id="chatTableWrapper"></div></div>
+    <div class="stats-card"><h3> 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
   </div>
 </div>
 
@@ -289,19 +278,7 @@
     let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
       const avg = (s.sumValues/s.total).toFixed(1);
-      dH += `<tr>
-        <td><span class="rank-name">${s.name}</span></td>
-        <td style="text-align:right;">
-          <div class="dice-count-cell">
-            <span style="font-weight:700;">${s.total}</span>
-            <span class="sp-only sp-avg-text">平均:${avg}</span>
-          </div>
-        </td>
-        <td class="pc-only" style="text-align:right;">${avg}</td>
-        <td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td>
-        <td class="pc-only" style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
-        <td class="sp-only" style="text-align:right;"><div class="sub-val">${((s.suc/s.total)*100).toFixed(0)}%</div><div class="dice-info-row"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
-      </tr>`;
+      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right;"><div class="dice-count-cell"><span style="font-weight:700;">${s.total}</span><span class="sp-only sp-avg-text">平均:${avg}</span></div></td><td class="pc-only" style="text-align:right;">${avg}</td><td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td class="pc-only" style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td><td class="sp-only" style="text-align:right;"><div class="sub-val">${((s.suc/s.total)*100).toFixed(0)}%</div><div class="dice-info-row"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td></tr>`;
     });
     document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
 
@@ -318,18 +295,14 @@
     const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
     const maxC = cL[0]?.[1] || 1;
     let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
-    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--line-pink)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
     document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
 
     const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
     let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
     sL.forEach(([n, data]) => {
       const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
-      sH += `<tr>
-        <td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td>
-        <td class="pc-only"><span class="mvp-cell">${topUser}</span></td>
-        <td style="text-align:right; font-weight:700;">${data.total}</td>
-      </tr>`;
+      sH += `<tr><td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
     });
     document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
   }
