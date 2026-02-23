@@ -78,9 +78,9 @@
     </div>
     <div class="guide-content" id="guideContent">
       <ul style="margin:0; padding-left:20px; font-size:0.85em;">
-        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
-        <li><b>会話ログを保存</b>：systemメッセージを消して、RPやダイス結果を残したログを保存します。</li>
-        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去したログを保存します。</li>
+        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示。</li>
+        <li><b>会話ログを保存</b>：systemメッセージと削除済発言を消して保存。</li>
+        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去したフルログ。</li>
       </ul>
     </div>
   </div>
@@ -100,7 +100,7 @@
   </div>
 
   <div id="excludeSection">
-    <div class="exclude-title">表示・非表示の切り替え：</div>
+    <div class="exclude-title">表示切り替え（統計画面のみ反映）：</div>
     <div id="excludeList" class="exclude-list"></div>
   </div>
   <div id="status" style="margin-top:15px; font-size: 0.9em; color: var(--text-sub);"></div>
@@ -108,18 +108,15 @@
 
 <div id="statsArea">
   <div class="stats-row row-top">
-    <div class="stats-card">
-      <h3> ダイス統計</h3>
-      <div id="diceTableWrapper"></div>
-    </div>
+    <div class="stats-card"><h3>🎲 ダイス統計</h3><div id="diceTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3> HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
-    <div class="stats-card"><h3> SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+    <div class="stats-card"><h3>💔 HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
+    <div class="stats-card"><h3>🧠 SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3> チャット回数</h3><div id="chatTableWrapper"></div></div>
-    <div class="stats-card"><h3> 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+    <div class="stats-card"><h3>💬 チャット回数</h3><div id="chatTableWrapper"></div></div>
+    <div class="stats-card"><h3>✨ 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
   </div>
 </div>
 
@@ -254,11 +251,10 @@
   }
 
   function renderTables(diceList, damageList, chats, skills) {
-    diceList.sort((a, b) => { if (b.total !== a.total) return b.total - a.total; return (b.suc / b.total) - (a.suc / a.total); });
-    let dH = '<table><thead><tr><th>名前</th><th style="text-align:right;">回数</th><th style="text-align:right;">平均</th><th style="text-align:right;">成功率</th><th style="text-align:right;">C / F</th></tr></thead><tbody>';
+    diceList.sort((a, b) => b.total - a.total);
+    let dH = '<table><thead><tr><th>名前</th><th style="text-align:right;">回数</th><th style="text-align:right;">平均</th><th style="text-align:right;">成功率</th><th style="text-align:right;">C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
-      const avg = (s.sumValues / s.total).toFixed(1);
-      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right; font-weight:700;">${s.total}</td><td style="text-align:right;" class="sub-val">${avg}</td><td style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit > 0 ? 'c-text' : 'zero-text'}">${s.crit}</span><span style="color:#4f545c; font-size:0.8em;">/</span><span class="val-unit ${s.fum > 0 ? 'f-text' : 'zero-text'}">${s.fum}</span></div></td></tr>`;
+      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right; font-weight:700;">${s.total}</td><td style="text-align:right;" class="sub-val">${(s.sumValues/s.total).toFixed(1)}</td><td style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td></tr>`;
     });
     document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>データなし</p>';
 
@@ -296,14 +292,11 @@
   }
 
   document.getElementById('saveRpHtmlBtn').addEventListener('click', () => {
-    const checkedExcludes = Array.from(document.querySelectorAll('#excludeList input:checked')).map(i => i.value);
     const parser = new DOMParser();
     const doc = parser.parseFromString(originalHtml, 'text/html');
     doc.querySelectorAll('p').forEach(p => {
       const text = p.innerText.trim();
-      if (text.startsWith('system :') || text.includes('削除済')) { p.remove(); return; }
-      const m = text.match(/\[.*?\]\s*(.*?)\s*:/);
-      if (m && checkedExcludes.includes(m[1].trim())) { p.remove(); }
+      if (text.startsWith('system :') || text.includes('削除済')) { p.remove(); }
     });
     saveBlob(doc.documentElement.outerHTML, "_Conversation.html");
   });
@@ -315,5 +308,3 @@
 </script>
 </body>
 </html>
-
-
