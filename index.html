@@ -25,55 +25,51 @@
   .card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; margin-bottom: 20px; }
   h2 { color: #fff; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 5px; }
   .privacy-note { font-size: 0.75em; color: var(--text-sub); margin-bottom: 25px; }
+  
   .guide-container { text-align: left; background: #313338; border-radius: 8px; margin-bottom: 25px; overflow: hidden; }
   .guide-header { padding: 10px 20px; background: #383a40; cursor: pointer; font-size: 0.9em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
   .guide-content { padding: 20px; font-size: 0.85em; display: none; }
-  .file-input-area { border: 2px dashed #4f545c; padding: 30px 20px; border-radius: 8px; background: #313338; cursor: pointer; margin-bottom: 20px; }
+  
+  .file-input-area { border: 2px dashed #4f545c; padding: 30px 20px; border-radius: 8px; background: #313338; cursor: pointer; margin-bottom: 20px; position: relative; }
   input[type="file"] { display: none; }
   .file-label { color: var(--accent); text-decoration: underline; font-weight: bold; }
   
   .file-info-box { font-size: 0.85em; color: var(--accent); margin: 20px auto 0; background: rgba(197, 55, 60, 0.1); padding: 12px; border-radius: 6px; border-left: 4px solid var(--accent); max-width: 500px; text-align: left; display: none; }
   .file-info-box .file-name { font-weight: bold; display: block; margin-bottom: 4px; }
-  .file-info-box .next-guide { font-size: 0.8em; color: var(--text-sub); display: block; }
+  .file-info-box .next-guide { font-size: 0.85em; color: var(--text-sub); display: block; margin-top: 4px; }
 
   .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-  .btn { display: inline-block; padding: 10px 25px; font-size: 14px; cursor: pointer; background-color: var(--accent); color: white; border: none; border-radius: 25px; font-weight: bold; transition: 0.2s; }
+  .btn { display: none; padding: 10px 25px; font-size: 14px; cursor: pointer; background-color: var(--accent); color: white; border: none; border-radius: 25px; font-weight: bold; transition: 0.2s; }
 
   #statsArea { display: none; flex-direction: column; gap: 20px; margin-top: 20px; }
-  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
   .stats-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow-x: auto; }
   .stats-card h3 { border-bottom: 2px solid var(--line-pink); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
   
-  table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 400px; table-layout: fixed; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 380px; }
   th { padding: 10px; text-align: left; color: var(--text-sub); font-size: 0.8em; border-bottom: 1px solid rgba(255,255,255,0.1); }
   td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-  .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; width: 100%; }
   .bar-fill { height: 100%; transition: width 0.5s ease-out; }
 
-  .pc-only { display: table-cell; }
-  .sp-only { display: none; }
-
   @media screen and (max-width: 600px) {
-    table { min-width: 0; }
-    .bar-container { display: none; }
-    .pc-only { display: none; }
-    .sp-only { display: block; }
+    .stats-card { padding: 15px; }
+    table { font-size: 0.85em; min-width: 300px; }
+    td, th { padding: 10px 5px; }
   }
 
   #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
   .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
-  .exclude-item { background: #1e1f22; padding: 8px 16px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid transparent; display: flex; align-items: center; gap: 6px; transition: 0.2s; color: #4f545c; }
-  .exclude-item.is-active { background: #4f545c; color: #fff; }
+  .exclude-item { background: #1e1f22; padding: 8px 16px; border-radius: 20px; font-size: 0.8em; cursor: pointer; transition: 0.2s; color: #b5bac1; border: 1px solid transparent; }
+  .exclude-item.is-active { background: #4f545c; color: #fff; border-color: #6e7278; }
   .exclude-item input { display: none; }
 
-  .val-unit { font-weight: 800; font-size: 1.2em; }
-  .c-text { color: var(--crit-color); }
-  .f-text { color: var(--hp-red); }
+  .c-text { color: var(--crit-color); font-weight: bold; }
+  .f-text { color: var(--hp-red); font-weight: bold; }
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
   .skill-tag { background: #383a40; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-  .mvp-cell { color: var(--text-sub); font-size: 0.9em; }
 </style>
 </head>
 <body>
@@ -101,9 +97,9 @@
   </div>
 
   <div class="btn-group">
-    <button id="processBtn" class="btn" style="display:none;">解析して統計を表示</button>
-    <button id="downloadBtn" class="btn" style="display:none;">掃除済みログを保存</button>
-    <button id="saveRpHtmlBtn" class="btn" style="display:none;">会話ログを保存</button>
+    <button id="processBtn" class="btn">解析して統計を表示</button>
+    <button id="downloadBtn" class="btn">掃除済みログを保存</button>
+    <button id="saveRpHtmlBtn" class="btn">会話ログを保存</button>
   </div>
 
   <div id="excludeSection">
@@ -125,6 +121,7 @@
   let originalHtml = "", diceUsers = new Set(), currentFileName = "";
   const tabExcludeRegex = /\[info\]|\[other\]/i;
   const diceStrictRegex = /(\bCC\b|\bCCB\b|\d+d\d+).*＞/i;
+  const autoExcludeRegex = /KP|GM|キーパー|▽|🦑|🍜/i;
 
   function isPracticallyEmpty(element) {
     if (!element) return true;
@@ -132,31 +129,31 @@
     return text.replace(/[\s　\n\r]/g, '').replace(/&nbsp;/g, '').length === 0;
   }
 
-  function resetDisplay() {
+  function resetAll() {
     originalHtml = "";
     diceUsers.clear();
     document.getElementById('statsArea').innerHTML = '';
     document.getElementById('statsArea').style.display = 'none';
     document.getElementById('excludeSection').style.display = 'none';
-    document.getElementById('downloadBtn').style.display = 'none';
-    document.getElementById('saveRpHtmlBtn').style.display = 'none';
+    document.getElementById('excludeList').innerHTML = '';
     document.getElementById('status').innerText = '';
+    // ボタンを一旦全部隠す
+    document.querySelectorAll('.btn').forEach(b => b.style.display = 'none');
   }
 
   function handleFile(file) {
     if (!file) return;
-    resetDisplay();
+    resetAll(); // 新しいファイルを読み込む前に全部消す
+    
     currentFileName = file.name;
     const infoBox = document.getElementById('fileInfoBox');
     infoBox.innerHTML = `<span class="file-name">選択中: ${file.name}</span><span class="next-guide">別のファイルをドロップして入れ替えられます</span>`;
     infoBox.style.display = 'block';
     document.getElementById('dropText').style.display = 'none';
+    document.getElementById('processBtn').style.display = 'inline-block';
 
     const reader = new FileReader();
-    reader.onload = (ev) => { 
-      originalHtml = ev.target.result;
-      document.getElementById('processBtn').style.display = 'inline-block';
-    };
+    reader.onload = (ev) => { originalHtml = ev.target.result; };
     reader.readAsText(file, 'UTF-8');
   }
 
@@ -169,13 +166,16 @@
     const doc = new DOMParser().parseFromString(html, 'text/html');
     doc.querySelectorAll('p').forEach(p => {
       const spans = p.querySelectorAll('span');
-      if (spans.length < 2) return;
-      if (tabExcludeRegex.test(spans[0].innerText)) return;
+      if (spans.length < 2 || tabExcludeRegex.test(spans[0].innerText)) return;
       const text = p.innerText.trim();
-      if (text.startsWith('system :')) return;
       const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/i);
-      if (dM && dM[1] && diceStrictRegex.test(dM[2])) {
-        diceUsers.add(dM[1].trim());
+      if (dM && dM[1]) {
+        const name = dM[1].trim();
+        const msg = dM[2].trim();
+        // 名前が除外対象でなく、かつダイスを振っている場合のみ追加
+        if (!autoExcludeRegex.test(name) && diceStrictRegex.test(msg)) {
+          diceUsers.add(name);
+        }
       }
     });
   }
@@ -184,10 +184,9 @@
     const list = document.getElementById('excludeList');
     list.innerHTML = '';
     [...diceUsers].sort().forEach(name => {
-      const isAuto = /KP|GM|キーパー|システム/i.test(name);
       const label = document.createElement('label');
-      label.className = 'exclude-item' + (!isAuto ? ' is-active' : '');
-      label.innerHTML = `<input type="checkbox" value="${name}" ${!isAuto ? 'checked' : ''}> ${name}`;
+      label.className = 'exclude-item is-active';
+      label.innerHTML = `<input type="checkbox" value="${name}" checked> ${name}`;
       label.querySelector('input').addEventListener('change', (e) => {
         label.classList.toggle('is-active', e.target.checked);
         updateStats();
@@ -232,13 +231,11 @@
         }
       }
       const sM = rawText.match(/system\s*:\s*\[\s*(.*?)\s*\]\s*(.*?)\s*:\s*(\d+)\s*→\s*(\d+)/i);
-      if (sM) {
-        const char = sM[1].trim(), attr = sM[2].trim(), b = parseInt(sM[3]), a = parseInt(sM[4]);
-        if (char && checkedUsers.includes(char) && a < b) {
-          if (!damage[char]) damage[char] = { name: char, hp: 0, san: 0 };
-          if (attr.match(/HP|耐久/i)) damage[char].hp += (b - a);
-          if (attr.match(/SAN|正気/i)) damage[char].san += (b - a);
-        }
+      if (sM && checkedUsers.includes(sM[1].trim()) && parseInt(sM[4]) < parseInt(sM[3])) {
+        const char = sM[1].trim(), attr = sM[2].trim(), diff = parseInt(sM[3]) - parseInt(sM[4]);
+        if (!damage[char]) damage[char] = { name: char, hp: 0, san: 0 };
+        if (attr.match(/HP|耐久/i)) damage[char].hp += diff;
+        if (attr.match(/SAN|正気/i)) damage[char].san += diff;
       }
     });
     renderTables(Object.values(dice), Object.values(damage), chats, skills);
@@ -257,49 +254,36 @@
         <div class="stats-card"><h3>✧ 技能ランキング</h3><div id="skillTableWrapper"></div></div>
       </div>`;
 
-    // --- ダイス統計 ---
     diceList.sort((a, b) => b.total - a.total);
-    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
+    let dH = '<table><thead><tr><th>名前</th><th style="text-align:right;">回数</th><th style="text-align:right;">成功率</th><th style="text-align:right;">C / F</th></tr></thead><tbody>';
     diceList.forEach(s => {
-      const avg = (s.sumValues/s.total).toFixed(1);
-      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right;"><span style="font-weight:700;">${s.total}</span></td><td class="pc-only" style="text-align:right;">${avg}</td><td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td class="sp-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}% <span class="c-text">${s.crit}</span>/<span class="f-text">${s.fum}</span></td></tr>`;
+      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right; font-weight:700;">${s.total}</td><td style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td style="text-align:right;"><span class="c-text">${s.crit}</span> / <span class="f-text">${s.fum}</span></td></tr>`;
     });
     document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
 
-    // --- HP/SAN減少 ---
     ['hp', 'san'].forEach(type => {
       const filtered = damageList.filter(d => d[type] > 0).sort((a, b) => b[type] - a[type]);
       const wrap = document.getElementById(type + 'TableWrapper');
       if (!filtered.length) { wrap.innerHTML = '<p>なし</p>'; return; }
       const max = filtered[0][type], color = type === 'hp' ? 'var(--hp-red)' : 'var(--san-blue)';
-      let h = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">減少量</th></tr></thead><tbody>';
+      let h = '<table><thead><tr><th>名前</th><th style="text-align:right; width:60px;">減少</th></tr></thead><tbody>';
       filtered.forEach(d => h += `<tr><td><span class="rank-name">${d.name}</span><div class="bar-container"><div class="bar-fill" style="width:${(d[type]/max*100)}%; background:${color}"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="color:${color}; font-weight:800;">-${d[type]}</span></td></tr>`);
       wrap.innerHTML = h + '</tbody></table>';
     });
 
-    // --- チャット回数 ---
     const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
     const maxC = cL.length > 0 ? cL[0][1] : 1;
-    let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
+    let cH = '<table><thead><tr><th>名前</th><th style="text-align:right; width:60px;">回数</th></tr></thead><tbody>';
     cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
     document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
 
-    // --- 技能ランキング ---
     const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 15);
-    let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
+    let sH = '<table><thead><tr><th>技能</th><th>最多使用者</th><th style="text-align:right;">回数</th></tr></thead><tbody>';
     sL.forEach(([n, data]) => {
       const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
-      sH += `<tr><td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
+      sH += `<tr><td><span class="skill-tag">${n}</span></td><td style="color:var(--text-sub); font-size:0.9em;">${topUser}</td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
     });
     document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
-  }
-
-  function saveFile(c, s) {
-    const b = new Blob([c], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(b);
-    a.download = currentFileName.replace(/\.[^/.]+$/, "") + s;
-    a.click();
   }
 
   document.getElementById('processBtn').addEventListener('click', function() {
@@ -307,11 +291,12 @@
     extractDiceUsers(originalHtml);
     renderExcludeToggles();
     updateStats();
-    this.style.display = 'none';
     document.getElementById('excludeSection').style.display = 'block';
     document.getElementById('statsArea').style.display = 'flex';
     document.getElementById('downloadBtn').style.display = 'inline-block';
     document.getElementById('saveRpHtmlBtn').style.display = 'inline-block';
+    // 解析ボタンは一度押したら消す（または状態維持）
+    this.style.display = 'none';
     document.getElementById('status').innerText = '解析完了 🦑';
   });
 
@@ -322,7 +307,8 @@
       if (spans.length > 0 && tabExcludeRegex.test(spans[0].innerText)) { p.remove(); return; }
       if (p.innerText.trim().startsWith('system :') || p.innerText.includes('削除済') || isPracticallyEmpty(spans[spans.length-1])) p.remove();
     });
-    saveFile(doc.documentElement.outerHTML, "_Conversation.html");
+    const b = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = currentFileName.replace(/\.[^/.]+$/, "") + "_Conversation.html"; a.click();
   });
 
   document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -331,7 +317,8 @@
       const spans = p.querySelectorAll('span');
       if (p.innerText.includes('削除済') || isPracticallyEmpty(spans[spans.length-1])) p.remove();
     });
-    saveFile(doc.documentElement.outerHTML, "_cleaned.html");
+    const b = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = currentFileName.replace(/\.[^/.]+$/, "") + "_cleaned.html"; a.click();
   });
 </script>
 </body>
