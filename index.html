@@ -59,6 +59,20 @@
     .bar-container { display: none; }
     #diceTableWrapper .pc-only { display: none; }
     #diceTableWrapper .sp-only { display: block; }
+    
+    /* 回数と平均を縦に並べる設定 */
+    .dice-count-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .sp-avg-text {
+      font-size: 0.75em;
+      color: var(--text-sub);
+      font-weight: normal;
+    }
+
     #skillTableWrapper .pc-only { display: table-cell !important; }
     #skillTableWrapper .sp-only { display: none !important; }
     .stats-card { padding: 15px; }
@@ -70,7 +84,6 @@
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
   .exclude-item { background: #1e1f22; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid #4f545c; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
   
-  /* 非表示（除外）時のスタイル */
   .exclude-item.is-excluded { opacity: 0.4; background: #2b2d31; border-color: transparent; filter: grayscale(1); }
 
   .dice-info-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
@@ -127,15 +140,15 @@
 
 <div id="statsArea">
   <div class="stats-row row-top">
-    <div class="stats-card"><h3> ダイス統計</h3><div id="diceTableWrapper"></div></div>
+    <div class="stats-card"><h3>🎲 ダイス統計</h3><div id="diceTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3> HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
-    <div class="stats-card"><h3> SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+    <div class="stats-card"><h3>💔 HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
+    <div class="stats-card"><h3>🧠 SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
   </div>
   <div class="stats-row">
-    <div class="stats-card"><h3> チャット回数</h3><div id="chatTableWrapper"></div></div>
-    <div class="stats-card"><h3> 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+    <div class="stats-card"><h3>💬 チャット回数</h3><div id="chatTableWrapper"></div></div>
+    <div class="stats-card"><h3>✨ 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
   </div>
 </div>
 
@@ -281,12 +294,18 @@
 
   function renderTables(diceList, damageList, chats, skills) {
     diceList.sort((a, b) => b.total - a.total);
-    let dH = '<table><thead><tr><th>名前</th><th style="width:50px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:120px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
+    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
+      const avg = (s.sumValues/s.total).toFixed(1);
       dH += `<tr>
-        <td><span class="rank-name">${s.name}</span><span class="sub-val sp-only">Avg: ${(s.sumValues/s.total).toFixed(1)}</span></td>
-        <td style="text-align:right; font-weight:700;">${s.total}</td>
-        <td class="pc-only" style="text-align:right;" class="sub-val">${(s.sumValues/s.total).toFixed(1)}</td>
+        <td><span class="rank-name">${s.name}</span></td>
+        <td style="text-align:right;">
+          <div class="dice-count-cell">
+            <span style="font-weight:700;">${s.total}</span>
+            <span class="sp-only sp-avg-text">平均:${avg}</span>
+          </div>
+        </td>
+        <td class="pc-only" style="text-align:right;" class="sub-val">${avg}</td>
         <td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td>
         <td class="pc-only" style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
         <td class="sp-only" style="text-align:right;"><div class="sub-val">${((s.suc/s.total)*100).toFixed(0)}%</div><div class="dice-info-row"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
