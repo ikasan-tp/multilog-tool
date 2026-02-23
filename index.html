@@ -294,7 +294,7 @@
 
   function renderTables(diceList, damageList, chats, skills) {
     diceList.sort((a, b) => b.total - a.total);
-    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
+    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均値</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
       const avg = (s.sumValues/s.total).toFixed(1);
       dH += `<tr>
@@ -367,3 +367,4 @@
 </script>
 </body>
 </html>
+
