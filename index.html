@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>🦑 Multi Tool for CCFOLIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-dark: #1e1f22;
+    --card-bg: #2b2d31;
+    --accent: #C5373C;
+    --text-main: #dbdee1;
+    --text-sub: #b5bac1;
+    --hp-red: #ff5252;
+    --san-blue: #00a0e9;
+    --btn-done: #4f545c;
+    --crit-color: #00e676;
+    --skill-purple: #9b59b6;
+  }
+
+  body { font-family: 'Noto Sans JP', sans-serif; line-height: 1.6; max-width: 1200px; margin: 40px auto; padding: 0 20px; background-color: var(--bg-dark); color: var(--text-main); }
+  
+  .card { background: var(--card-bg); padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; margin-bottom: 20px; }
+  h2 { color: #fff; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 20px; }
+  
+  .guide-container { text-align: left; background: #313338; border-radius: 8px; margin-bottom: 30px; overflow: hidden; }
+  .guide-header { padding: 10px 20px; background: #383a40; cursor: pointer; font-size: 0.9em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .guide-content { padding: 20px; font-size: 0.85em; display: none; }
+
+  .file-input-area { border: 2px dashed #4f545c; padding: 40px 20px; border-radius: 8px; background: #313338; cursor: pointer; margin-bottom: 20px; transition: all 0.2s ease; }
+  .file-input-area.dragover { border-color: var(--accent); background: #383a40; box-shadow: inset 0 0 15px rgba(197, 55, 60, 0.2); }
+  input[type="file"] { display: none; }
+  .file-label { color: var(--accent); text-decoration: underline; font-weight: bold; }
+
+  .file-info-box {
+    font-size: 0.85em; color: var(--accent); margin: 20px auto 0; background: rgba(197, 55, 60, 0.1);
+    padding: 12px; border-radius: 6px; border-left: 4px solid var(--accent); max-width: 500px; text-align: left; display: none;
+  }
+
+  .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 30px; font-size: 15px; cursor: pointer; background-color: var(--accent); color: white; border: none; border-radius: 25px; font-weight: bold; transition: 0.2s; }
+  .btn:hover:not(:disabled) { background-color: #D6484D; box-shadow: 0 0 15px rgba(197, 55, 60, 0.4); }
+  .btn:disabled { background-color: #4f545c; cursor: not-allowed; opacity: 0.5; }
+  .btn.is-processed { background-color: var(--btn-done); }
+
+  #statsArea { display: none; flex-direction: column; gap: 20px; margin-top: 20px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
+  .row-top { grid-template-columns: 1fr; }
+  .stats-card { background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height: fit-content; }
+  .stats-card h3 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 0.9em; table-layout: fixed; }
+  th { padding: 10px; text-align: left; color: var(--text-sub); font-size: 0.8em; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: normal; }
+  td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+  #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
+  .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
+  .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .exclude-item { background: #1e1f22; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid #4f545c; display: flex; align-items: center; gap: 6px; }
+  .exclude-item:has(input:checked) { border-color: var(--accent); opacity: 0.5; }
+
+  .dice-badge-group { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+  .val-unit { font-weight: 800; font-size: 1.2em; }
+  .c-text { color: var(--crit-color); }
+  .f-text { color: var(--hp-red); }
+  .zero-text { color: #444; }
+  .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+  .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; transition: width 0.5s ease-out; }
+  .skill-tag { background: #383a40; color: var(--skill-purple); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(155, 89, 182, 0.3); font-weight: bold; }
+  .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub-val { color: var(--text-sub); font-size: 0.85em; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Multi Tool for CCFOLIA</h2>
+  
+  <div class="guide-container">
+    <div class="guide-header" onclick="toggleGuide()">
+      <span>📖 このツールの使いかた</span>
+      <span id="guideArrow">▼</span>
+    </div>
+    <div class="guide-content" id="guideContent">
+      <ul style="margin:0; padding-left:20px; font-size:0.85em;">
+        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
+        <li><b>systemを除外して保存</b>：systemメッセージを消して、RPやダイス結果のみを残します。</li>
+        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去します。</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="file-input-area" id="dropZone">
+    <label for="logFile" style="cursor:pointer; display:block;">
+      <p id="dropText">ログファイルをドロップするか<br><span class="file-label">ファイルを選択</span>してください</p>
+      <input type="file" id="logFile" accept=".html,.txt">
+      <div id="fileInfoBox" class="file-info-box"></div>
+    </label>
+  </div>
+
+  <div class="btn-group">
+    <button id="processBtn" class="btn" disabled>解析して統計を表示</button>
+    <button id="saveRpHtmlBtn" class="btn" style="display:none;">会話ログを保存</button>
+    <button id="downloadBtn" class="btn" style="display:none;">掃除済みログを保存</button>
+  </div>
+
+  <div id="excludeSection">
+    <div class="exclude-title">表示・非表示の切り替え（保存時にも反映）：</div>
+    <div id="excludeList" class="exclude-list"></div>
+  </div>
+  <div id="status" style="margin-top:15px; font-size: 0.9em; color: var(--text-sub);"></div>
+</div>
+
+<div id="statsArea">
+  <div class="stats-row row-top">
+    <div class="stats-card">
+      <h3>ダイス統計</h3>
+      <div id="diceTableWrapper"></div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stats-card"><h3>HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
+    <div class="stats-card"><h3>SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+  </div>
+  <div class="stats-row">
+    <div class="stats-card"><h3>チャット回数</h3><div id="chatTableWrapper"></div></div>
+    <div class="stats-card"><h3>技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+  </div>
+</div>
+
+<script>
+  function toggleGuide() {
+    const content = document.getElementById('guideContent');
+    const arrow = document.getElementById('guideArrow');
+    content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+    arrow.innerText = (content.style.display === 'block') ? '▲' : '▼';
+  }
+
+  let originalHtml = "", diceUsers = new Set(), currentFileName = "";
+  const fileInput = document.getElementById('logFile');
+  const dropZone = document.getElementById('dropZone');
+  const processBtn = document.getElementById('processBtn');
+  const fileInfoBox = document.getElementById('fileInfoBox');
+  const dropText = document.getElementById('dropText');
+
+  function handleFile(file) {
+    if (!file) return;
+    currentFileName = file.name;
+    fileInfoBox.innerText = `選択中: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    fileInfoBox.style.display = 'block';
+    dropText.style.display = 'none';
+    processBtn.disabled = false;
+    processBtn.classList.remove('is-processed');
+    processBtn.innerText = "解析して統計を表示";
+    const reader = new FileReader();
+    reader.onload = (ev) => { originalHtml = ev.target.result; };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+
+  processBtn.addEventListener('click', function() {
+    if (!originalHtml) return;
+    extractDiceUsers(originalHtml);
+    renderExcludeToggles();
+    updateStats();
+    this.classList.add('is-processed');
+    this.innerText = "再解析する";
+    document.getElementById('excludeSection').style.display = 'block';
+    document.getElementById('statsArea').style.display = 'flex';
+    document.getElementById('downloadBtn').style.display = 'inline-block';
+    document.getElementById('saveRpHtmlBtn').style.display = 'inline-block';
+    document.getElementById('status').innerText = '解析が完了しました🦑';
+  });
+
+  // 統計解析ロジック（中略なし）
+  function extractDiceUsers(html) {
+    diceUsers.clear();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.trim();
+      const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*?\b(CC|CCB)\b.*＞.*)/i);
+      if (dM) {
+        const name = dM[1].trim();
+        if (name.length > 0) diceUsers.add(name);
+        return;
+      }
+      const sM = text.match(/system\s*:\s*\[\s*(.*?)\s*\]\s*(.*?)\s*:\s*(\d+)\s*→\s*(\d+)/i);
+      if (sM) {
+        const name = sM[1].trim();
+        if (name.length > 0) diceUsers.add(name);
+      }
+    });
+  }
+
+  function renderExcludeToggles() {
+    const list = document.getElementById('excludeList');
+    list.innerHTML = '';
+    [...diceUsers].sort().forEach(name => {
+      const isAutoExclude = /KP|GM|キーパー|システム/i.test(name);
+      const label = document.createElement('label');
+      label.className = 'exclude-item';
+      label.innerHTML = `<input type="checkbox" value="${name}" ${isAutoExclude ? 'checked' : ''}> ${name}`;
+      label.querySelector('input').addEventListener('change', updateStats);
+      list.appendChild(label);
+    });
+  }
+
+  function updateStats() {
+    const checkedExcludes = Array.from(document.querySelectorAll('#excludeList input:checked')).map(i => i.value);
+    const dice = {}, damage = {}, chats = {}, skills = {};
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(originalHtml, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.replace(/\s+/g, ' ');
+      const cM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/);
+      if (cM && !text.startsWith('system :')) {
+        const name = cM[1].trim();
+        const msg = cM[2].trim();
+        if (name.length > 0 && diceUsers.has(name) && !checkedExcludes.includes(name)) {
+          chats[name] = (chats[name] || 0) + 1;
+          const sNames = msg.match(/【(.*?)】/g);
+          if (sNames) sNames.forEach(s => {
+            const sn = s.replace(/[【】]/g, '').trim();
+            if (sn.length > 0) {
+              if (!skills[sn]) skills[sn] = { total: 0, users: {} };
+              skills[sn].total++;
+              skills[sn].users[name] = (skills[sn].users[name] || 0) + 1;
+            }
+          });
+          const diceResultMatch = msg.match(/\b(CC|CCB)\b.*＞\s*(\d+)/i);
+          if (diceResultMatch) {
+            if (!dice[name]) dice[name] = { name, total: 0, crit: 0, fum: 0, suc: 0, sumValues: 0 };
+            dice[name].total++;
+            dice[name].sumValues += parseInt(diceResultMatch[2]);
+            if (msg.match(/クリティカル|決定的成功/)) { dice[name].crit++; dice[name].suc++; }
+            else if (msg.match(/ファンブル|致命的失敗/)) { dice[name].fum++; }
+            else if (msg.match(/成功|スペシャル|イクストリーム|ハード|レギュラー/)) { dice[name].suc++; }
+          }
+        }
+      }
+      const sM = text.match(/system\s*:\s*\[\s*(.*?)\s*\]\s*(.*?)\s*:\s*(\d+)\s*→\s*(\d+)/i);
+      if (sM) {
+        const char = sM[1].trim();
+        if (char.length > 0 && diceUsers.has(char) && !checkedExcludes.includes(char)) {
+          const attr = sM[2].trim(), b = parseInt(sM[3]), a = parseInt(sM[4]);
+          if (a < b) {
+            if (!damage[char]) damage[char] = { name: char, hp: 0, san: 0 };
+            if (attr.match(/HP|耐久/i)) damage[char].hp += (b - a);
+            if (attr.match(/SAN|正気/i)) damage[char].san += (b - a);
+          }
+        }
+      }
+    });
+    renderTables(Object.values(dice), Object.values(damage), chats, skills);
+  }
+
+  function renderTables(diceList, damageList, chats, skills) {
+    diceList.sort((a, b) => { if (b.total !== a.total) return b.total - a.total; return (b.suc / b.total) - (a.suc / a.total); });
+    let dH = '<table><thead><tr><th>名前</th><th style="text-align:right; width:80px;">回数</th><th style="text-align:right; width:80px;">平均値</th><th style="text-align:right; width:100px;">成功率</th><th style="text-align:right; width:120px;">C / F</th></tr></thead><tbody>';
+    diceList.forEach(s => {
+      const avg = (s.sumValues / s.total).toFixed(1);
+      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right; font-weight:700;">${s.total}回</td><td style="text-align:right;" class="sub-val">${avg}</td><td style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit > 0 ? 'c-text' : 'zero-text'}">${s.crit}</span><span style="color:#4f545c; font-size:0.8em;">/</span><span class="val-unit ${s.fum > 0 ? 'f-text' : 'zero-text'}">${s.fum}</span></div></td></tr>`;
+    });
+    document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
+
+    ['hp', 'san'].forEach(type => {
+      const filtered = damageList.filter(d => d[type] > 0).sort((a, b) => b[type] - a[type]);
+      const wrap = document.getElementById(type + 'TableWrapper');
+      if (!filtered.length) { wrap.innerHTML = '<p>なし</p>'; return; }
+      const max = filtered[0][type], color = type === 'hp' ? 'var(--hp-red)' : 'var(--san-blue)';
+      let h = `<table><thead><tr><th>名前</th><th style="text-align:right; width:80px;">減少量</th></tr></thead><tbody>`;
+      filtered.forEach(d => h += `<tr><td><span class="rank-name">${d.name}</span><div class="bar-container"><div class="bar-fill" style="width:${(d[type]/max*100)}%; background:${color}"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="color:${color}; font-weight:800;">-${d[type]}</span></td></tr>`);
+      wrap.innerHTML = h + '</tbody></table>';
+    });
+
+    const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
+    const maxC = cL[0]?.[1] || 1;
+    let cH = '<table><thead><tr><th>名前</th><th style="text-align:right; width:80px;">回数</th></tr></thead><tbody>';
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
+
+    const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+    let sH = '<table><thead><tr><th>技能名</th><th style="text-align:left; width:150px;">最多使用者</th><th style="text-align:right; width:60px;">回数</th></tr></thead><tbody>';
+    sL.forEach(([n, data]) => {
+      const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
+      sH += `<tr><td><span class="skill-tag">${n}</span></td><td class="mvp-cell">${topUser}</td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
+    });
+    document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
+  }
+
+  function saveBlob(content, suffix) {
+    const blob = new Blob([content], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = currentFileName.replace(/\.[^/.]+$/, "") + suffix;
+    a.click();
+  }
+
+  // ★ここを修正：system行のみを狙い撃ちで消す
+  document.getElementById('saveRpHtmlBtn').addEventListener('click', () => {
+    const checkedExcludes = Array.from(document.querySelectorAll('#excludeList input:checked')).map(i => i.value);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(originalHtml, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.trim();
+      // 1. system行を削除
+      if (text.startsWith('system :')) { p.remove(); return; }
+      // 2. 削除済発言を削除
+      if (text.includes('削除済')) { p.remove(); return; }
+      // 3. チェックボックスで除外されたキャラを削除
+      const m = text.match(/\[.*?\]\s*(.*?)\s*:/);
+      if (m && checkedExcludes.includes(m[1].trim())) { p.remove(); }
+    });
+    saveBlob(doc.documentElement.outerHTML, "_Conversation.html");
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const cleaned = originalHtml.replace(/<p\b[^>]*>[\s\S]*?<\/p>[\r\n]*/gi, m => m.includes('削除済') ? '' : m);
+    saveBlob(cleaned, "_cleaned.html");
+  });
+</script>
+</body>
+</html>
