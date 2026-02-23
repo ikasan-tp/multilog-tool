@@ -59,8 +59,6 @@
     .bar-container { display: none; }
     .pc-only { display: none; }
     .sp-only { display: block; }
-    .stats-card { padding: 15px; }
-    .card { padding: 20px 15px; }
   }
 
   #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
@@ -75,6 +73,7 @@
   .f-text { color: var(--hp-red); }
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
   .skill-tag { background: #383a40; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+  .mvp-cell { color: var(--text-sub); font-size: 0.9em; }
 </style>
 </head>
 <body>
@@ -88,7 +87,7 @@
       <ul style="margin:0; padding-left:20px; font-size:0.85em;">
         <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
         <li><b>掃除済みログを保存</b>：「削除済」と空白発言を消去したログを保存します。</li>
-        <li><b>会話ログを保存</b>：systemメッセージ、「削除済」、空白発言を消して保存します。</li>
+        <li><b>会話ログを保存</b>：systemメッセージ、削除済、空白発言を消して保存します。</li>
       </ul>
     </div>
   </div>
@@ -258,6 +257,7 @@
         <div class="stats-card"><h3>✧ 技能ランキング</h3><div id="skillTableWrapper"></div></div>
       </div>`;
 
+    // --- ダイス統計 ---
     diceList.sort((a, b) => b.total - a.total);
     let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
@@ -266,26 +266,30 @@
     });
     document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
 
+    // --- HP/SAN減少 ---
     ['hp', 'san'].forEach(type => {
       const filtered = damageList.filter(d => d[type] > 0).sort((a, b) => b[type] - a[type]);
       const wrap = document.getElementById(type + 'TableWrapper');
       if (!filtered.length) { wrap.innerHTML = '<p>なし</p>'; return; }
       const max = filtered[0][type], color = type === 'hp' ? 'var(--hp-red)' : 'var(--san-blue)';
-      let h = `<table><tbody>`;
+      let h = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">減少量</th></tr></thead><tbody>';
       filtered.forEach(d => h += `<tr><td><span class="rank-name">${d.name}</span><div class="bar-container"><div class="bar-fill" style="width:${(d[type]/max*100)}%; background:${color}"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="color:${color}; font-weight:800;">-${d[type]}</span></td></tr>`);
       wrap.innerHTML = h + '</tbody></table>';
     });
 
+    // --- チャット回数 ---
     const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
-    let cH = '<table><tbody>';
-    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span></td><td style="text-align:right;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    const maxC = cL.length > 0 ? cL[0][1] : 1;
+    let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
     document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
 
+    // --- 技能ランキング ---
     const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 15);
     let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
     sL.forEach(([n, data]) => {
       const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
-      sH += `<tr><td><span class="skill-tag">${n}</span></td><td class="pc-only">${topUser}</td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
+      sH += `<tr><td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
     });
     document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
   }
@@ -332,4 +336,3 @@
 </script>
 </body>
 </html>
-
