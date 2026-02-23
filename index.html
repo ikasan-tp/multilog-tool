@@ -44,9 +44,27 @@
   .row-top { grid-template-columns: 1fr; }
   .stats-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow-x: auto; }
   .stats-card h3 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
+  
   table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 400px; }
   th { padding: 10px; text-align: left; color: var(--text-sub); font-size: 0.8em; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: normal; }
   td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+  /* ゲージ設定 */
+  .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; transition: width 0.5s ease-out; }
+
+  /* スマホ用設定 (画面幅 600px 以下) */
+  @media screen and (max-width: 600px) {
+    table { min-width: 0; }
+    /* ゲージを非表示 */
+    .bar-container { display: none; }
+    /* ダイス統計の特定列を調整 */
+    th:nth-child(3), td:nth-child(3) { display: none; } /* 平均を隠してスペース確保 */
+    .card { padding: 15px; }
+    .btn { padding: 10px 15px; font-size: 12px; }
+    h2 { font-size: 1.2em; }
+  }
+
   #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
   .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -58,8 +76,6 @@
   .f-text { color: var(--hp-red); }
   .zero-text { color: #444; }
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-  .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-  .bar-fill { height: 100%; transition: width 0.5s ease-out; }
   .skill-tag { background: #383a40; color: var(--skill-purple); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(155, 89, 182, 0.3); font-weight: bold; }
   .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sub-val { color: var(--text-sub); font-size: 0.85em; }
@@ -80,7 +96,7 @@
       <ul style="margin:0; padding-left:20px; font-size:0.85em;">
         <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
         <li><b>会話ログを保存</b>：systemメッセージと削除済発言を消して保存します。</li>
-        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去したログを保存します。</li>
+        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去して保存します。</li>
       </ul>
     </div>
   </div>
@@ -308,5 +324,3 @@
 </script>
 </body>
 </html>
-
-
