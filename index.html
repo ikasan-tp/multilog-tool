@@ -18,7 +18,6 @@
     --text-sub: #b5bac1;
     --hp-red: #ff5252;
     --san-blue: #00a0e9;
-    --btn-done: #4f545c;
     --crit-color: #00e676;
   }
 
@@ -42,7 +41,6 @@
 
   #statsArea { display: none; flex-direction: column; gap: 20px; margin-top: 20px; }
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-  .row-top { grid-template-columns: 1fr; }
   .stats-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow-x: auto; }
   .stats-card h3 { border-bottom: 2px solid var(--line-pink); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
   
@@ -59,24 +57,19 @@
   @media screen and (max-width: 600px) {
     table { min-width: 0; }
     .bar-container { display: none; }
-    #diceTableWrapper .pc-only { display: none; }
-    #diceTableWrapper .sp-only { display: block; }
-    .dice-count-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-    .sp-avg-text { font-size: 0.75em; color: var(--text-sub); font-weight: normal; }
+    .pc-only { display: none; }
+    .sp-only { display: block; }
     .stats-card { padding: 15px; }
     .card { padding: 20px 15px; }
   }
 
-  /* 表示切り替えボタンのデザイン修正 */
   #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
   .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
   .exclude-item { background: #1e1f22; padding: 8px 16px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid transparent; display: flex; align-items: center; gap: 6px; transition: 0.2s; color: #4f545c; }
-  /* 【修正】赤ラインを消し、背景の明るさでON/OFFを表現 */
   .exclude-item.is-active { background: #4f545c; color: #fff; }
-  .exclude-item input { display: none; } /* チェックボックス自体は隠してボタン風に見せる */
+  .exclude-item input { display: none; }
 
-  .dice-info-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
   .val-unit { font-weight: 800; font-size: 1.2em; }
   .c-text { color: var(--crit-color); }
   .f-text { color: var(--hp-red); }
@@ -84,7 +77,6 @@
   .rank-name { font-weight: 500; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
   .skill-tag { background: #383a40; color: var(--accent); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
   .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sub-val { color: var(--text-sub); font-size: 0.85em; }
 </style>
 </head>
 <body>
@@ -93,15 +85,11 @@
   <p class="privacy-note">※ログはサーバーに送信されず、ブラウザ内でのみ処理されます。</p>
   
   <div class="guide-container">
-    <div class="guide-header" onclick="toggleGuide()">
-      <span>✦ つかいかた</span>
-      <span id="guideArrow">▼</span>
-    </div>
+    <div class="guide-header" onclick="toggleGuide()"><span>✦ つかいかた</span><span id="guideArrow">▼</span></div>
     <div class="guide-content" id="guideContent">
       <ul style="margin:0; padding-left:20px; font-size:0.85em;">
-        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
-        <li><b>掃除済みログを保存</b>：「削除済」と空白発言を消去したログを保存します。</li>
-        <li><b>会話ログを保存</b>：systemメッセージ、削除済、空白発言を消して保存します。</li>
+        <li>CC / CCB / 1d100 を振った人だけを抽出します。</li>
+        <li>[info][other]タブは自動で除外されます。</li>
       </ul>
     </div>
   </div>
@@ -132,34 +120,40 @@
 <script>
   function toggleGuide() {
     const content = document.getElementById('guideContent');
-    const arrow = document.getElementById('guideArrow');
     content.style.display = (content.style.display === 'block') ? 'none' : 'block';
-    arrow.innerText = (content.style.display === 'block') ? '▲' : '▼';
+    document.getElementById('guideArrow').innerText = (content.style.display === 'block') ? '▲' : '▼';
   }
 
   let originalHtml = "", diceUsers = new Set(), currentFileName = "";
+  const tabExcludeRegex = /\[info\]|\[other\]/i;
+  // ダイス判定正規表現 (CC/CCB もしくは数字d数字 があって、かつ ＞ があるもの)
+  const diceStrictRegex = /(\bCC\b|\bCCB\b|\d+d\d+).*＞/i;
 
   function isPracticallyEmpty(element) {
     if (!element) return true;
     const text = element.textContent || element.innerText || "";
-    const cleanText = text.replace(/[\s　\n\r]/g, '').replace(/&nbsp;/g, '');
-    return cleanText.length === 0;
+    return text.replace(/[\s　\n\r]/g, '').replace(/&nbsp;/g, '').length === 0;
   }
 
-  function handleFile(file) {
-    if (!file) return;
-    currentFileName = file.name;
-    const infoBox = document.getElementById('fileInfoBox');
-    infoBox.innerHTML = `<span class="file-name">選択中: ${file.name}</span><span class="next-guide">別のファイルをドロップして入れ替えられます</span>`;
-    infoBox.style.display = 'block';
-    document.getElementById('dropText').style.display = 'none';
-    
-    document.getElementById('processBtn').style.display = 'none';
+  function resetDisplay() {
+    originalHtml = "";
+    diceUsers.clear();
+    document.getElementById('statsArea').innerHTML = '';
     document.getElementById('statsArea').style.display = 'none';
     document.getElementById('excludeSection').style.display = 'none';
     document.getElementById('downloadBtn').style.display = 'none';
     document.getElementById('saveRpHtmlBtn').style.display = 'none';
     document.getElementById('status').innerText = '';
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    resetDisplay();
+    currentFileName = file.name;
+    const infoBox = document.getElementById('fileInfoBox');
+    infoBox.innerHTML = `<span class="file-name">選択中: ${file.name}</span><span class="next-guide">別のファイルをドロップして入れ替えられます</span>`;
+    infoBox.style.display = 'block';
+    document.getElementById('dropText').style.display = 'none';
 
     const reader = new FileReader();
     reader.onload = (ev) => { 
@@ -177,18 +171,18 @@
     diceUsers.clear();
     const doc = new DOMParser().parseFromString(html, 'text/html');
     doc.querySelectorAll('p').forEach(p => {
+      const spans = p.querySelectorAll('span');
+      if (spans.length < 2) return;
+      if (tabExcludeRegex.test(spans[0].innerText)) return; // [info][other]除外
+
       const text = p.innerText.trim();
+      // system発言は名前リストには入れない
       if (text.startsWith('system :')) return;
-      const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*?\b(CC|CCB)\b.*＞.*|.*＞.*)/i);
-      if (dM && dM[1]) {
-        const name = dM[1].trim();
-        if (name) diceUsers.add(name);
-        return;
-      }
-      const sM = text.match(/system\s*:\s*\[\s*(.*?)\s*\]/i);
-      if (sM && sM[1]) {
-        const name = sM[1].trim();
-        if (name) diceUsers.add(name);
+
+      // 実際にダイスを振った人だけを抽出対象にする
+      const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/i);
+      if (dM && dM[1] && diceStrictRegex.test(dM[2])) {
+        diceUsers.add(dM[1].trim());
       }
     });
   }
@@ -216,6 +210,8 @@
     
     doc.querySelectorAll('p').forEach(p => {
       const spans = p.querySelectorAll('span');
+      if (spans.length < 2 || tabExcludeRegex.test(spans[0].innerText)) return;
+
       const lastSpan = spans[spans.length - 1];
       const rawText = p.innerText.replace(/\s+/g, ' ');
       const cM = rawText.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/);
@@ -228,12 +224,12 @@
           const sNames = msg.match(/【(.*?)】/g);
           if (sNames) sNames.forEach(s => {
             const sn = s.replace(/[【】]/g, '').trim();
-            if (sn) {
+            if (sn && !sn.match(/ボーナス|ペナルティ/)) {
               if (!skills[sn]) skills[sn] = { total: 0, users: {} };
               skills[sn].total++; skills[sn].users[name] = (skills[sn].users[name] || 0) + 1;
             }
           });
-          const dR = msg.match(/\b(CC|CCB)\b.*＞\s*(\d+)/i);
+          const dR = msg.match(/(?:\b(CC|CCB)\b.*)?＞\s*(\d+)/i);
           if (dR) {
             if (!dice[name]) dice[name] = { name, total: 0, crit: 0, fum: 0, suc: 0, sumValues: 0 };
             dice[name].total++; dice[name].sumValues += parseInt(dR[2]);
@@ -259,21 +255,21 @@
   function renderTables(diceList, damageList, chats, skills) {
     const statsArea = document.getElementById('statsArea');
     statsArea.innerHTML = `
-      <div class="stats-row row-top"><div class="stats-card"><h3>✧ ダイス統計</h3><div id="diceTableWrapper"></div></div></div>
+      <div class="stats-row"><div class="stats-card"><h3>✧ ダイス統計</h3><div id="diceTableWrapper"></div></div></div>
       <div class="stats-row">
-        <div class="stats-card"><h3>✧ HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
-        <div class="stats-card"><h3>✧ SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+        <div class="stats-card"><h3>✧ HP減少</h3><div id="hpTableWrapper"></div></div>
+        <div class="stats-card"><h3>✧ SAN減少</h3><div id="sanTableWrapper"></div></div>
       </div>
       <div class="stats-row">
         <div class="stats-card"><h3>✧ チャット回数</h3><div id="chatTableWrapper"></div></div>
-        <div class="stats-card"><h3>✧ 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+        <div class="stats-card"><h3>✧ 技能ランキング</h3><div id="skillTableWrapper"></div></div>
       </div>`;
 
     diceList.sort((a, b) => b.total - a.total);
-    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
+    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
     diceList.forEach(s => {
       const avg = (s.sumValues/s.total).toFixed(1);
-      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right;"><div class="dice-count-cell"><span style="font-weight:700;">${s.total}</span><span class="sp-only sp-avg-text">平均:${avg}</span></div></td><td class="pc-only" style="text-align:right;">${avg}</td><td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td class="pc-only" style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td><td class="sp-only" style="text-align:right;"><div class="sub-val">${((s.suc/s.total)*100).toFixed(0)}%</div><div class="dice-info-row"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td></tr>`;
+      dH += `<tr><td><span class="rank-name">${s.name}</span></td><td style="text-align:right;"><span style="font-weight:700;">${s.total}</span></td><td class="pc-only" style="text-align:right;">${avg}</td><td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td><td class="sp-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}% <span class="c-text">${s.crit}</span>/<span class="f-text">${s.fum}</span></td></tr>`;
     });
     document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
 
@@ -282,22 +278,21 @@
       const wrap = document.getElementById(type + 'TableWrapper');
       if (!filtered.length) { wrap.innerHTML = '<p>なし</p>'; return; }
       const max = filtered[0][type], color = type === 'hp' ? 'var(--hp-red)' : 'var(--san-blue)';
-      let h = `<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">減少量</th></tr></thead><tbody>`;
+      let h = `<table><tbody>`;
       filtered.forEach(d => h += `<tr><td><span class="rank-name">${d.name}</span><div class="bar-container"><div class="bar-fill" style="width:${(d[type]/max*100)}%; background:${color}"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="color:${color}; font-weight:800;">-${d[type]}</span></td></tr>`);
       wrap.innerHTML = h + '</tbody></table>';
     });
 
     const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
-    const maxC = cL[0]?.[1] || 1;
-    let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
-    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    let cH = '<table><tbody>';
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span></td><td style="text-align:right;"><span style="font-weight:800;">${c}</span></td></tr>`);
     document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
 
-    const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+    const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 15);
     let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
     sL.forEach(([n, data]) => {
       const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
-      sH += `<tr><td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
+      sH += `<tr><td><span class="skill-tag">${n}</span></td><td class="pc-only"><span class="mvp-cell">${topUser}</span></td><td style="text-align:right; font-weight:700;">${data.total}</td></tr>`;
     });
     document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
   }
@@ -315,7 +310,6 @@
     extractDiceUsers(originalHtml);
     renderExcludeToggles();
     updateStats();
-    
     this.style.display = 'none';
     document.getElementById('excludeSection').style.display = 'block';
     document.getElementById('statsArea').style.display = 'flex';
@@ -328,6 +322,7 @@
     const doc = new DOMParser().parseFromString(originalHtml, 'text/html');
     doc.querySelectorAll('p').forEach(p => {
       const spans = p.querySelectorAll('span');
+      if (spans.length > 0 && tabExcludeRegex.test(spans[0].innerText)) { p.remove(); return; }
       if (p.innerText.trim().startsWith('system :') || p.innerText.includes('削除済') || isPracticallyEmpty(spans[spans.length-1])) p.remove();
     });
     saveFile(doc.documentElement.outerHTML, "_Conversation.html");
