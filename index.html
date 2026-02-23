@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🦑 CCFOLIA Multi Tool</title>
+<title>🦑 CCFOLIA LogTool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -51,23 +51,16 @@
   .bar-container { background: #1e1f22; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
   .bar-fill { height: 100%; transition: width 0.5s ease-out; }
 
-  /* 表示切り替え用 */
   .pc-only { display: table-cell; }
   .sp-only { display: none; }
 
   @media screen and (max-width: 600px) {
     table { min-width: 0; }
-    /* ゲージ非表示 */
     .bar-container { display: none; }
-    
-    /* ダイス統計のみスマホ版レイアウトに切り替え */
     #diceTableWrapper .pc-only { display: none; }
     #diceTableWrapper .sp-only { display: block; }
-    
-    /* 技能ランキングは3カラム維持のため、sp-only(2行目)を隠し、pc-only(独立列)を出す */
     #skillTableWrapper .pc-only { display: table-cell !important; }
     #skillTableWrapper .sp-only { display: none !important; }
-
     .stats-card { padding: 15px; }
     .card { padding: 20px 15px; }
   }
@@ -75,8 +68,11 @@
   #excludeSection { background: #313338; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left; display: none; }
   .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
-  .exclude-item { background: #1e1f22; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid #4f545c; display: flex; align-items: center; gap: 6px; }
+  .exclude-item { background: #1e1f22; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid #4f545c; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
   
+  /* 非表示（除外）時のスタイル */
+  .exclude-item.is-excluded { opacity: 0.4; background: #2b2d31; border-color: transparent; filter: grayscale(1); }
+
   .dice-info-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
   .val-unit { font-weight: 800; font-size: 1.2em; }
   .c-text { color: var(--crit-color); }
@@ -91,7 +87,7 @@
 <body>
 
 <div class="card">
-  <h2>CCFOLIA Multi Tool</h2>
+  <h2>LogTool for CCFOLIA</h2>
   <p class="privacy-note">※ログはサーバーに送信されず、ブラウザ内でのみ処理されます。</p>
   
   <div class="guide-container">
@@ -123,7 +119,7 @@
   </div>
 
   <div id="excludeSection">
-    <div class="exclude-title">表示切り替え（統計画面のみ反映）：</div>
+    <div class="exclude-title">表示切り替え：</div>
     <div id="excludeList" class="exclude-list"></div>
   </div>
   <div id="status" style="margin-top:15px; font-size: 0.9em; color: var(--text-sub);"></div>
@@ -217,9 +213,19 @@
     [...diceUsers].sort().forEach(name => {
       const isAutoExclude = /KP|GM|キーパー|システム/i.test(name);
       const label = document.createElement('label');
-      label.className = 'exclude-item';
+      label.className = 'exclude-item' + (isAutoExclude ? ' is-excluded' : '');
       label.innerHTML = `<input type="checkbox" value="${name}" ${isAutoExclude ? 'checked' : ''}> ${name}`;
-      label.querySelector('input').addEventListener('change', updateStats);
+      
+      const checkbox = label.querySelector('input');
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          label.classList.add('is-excluded');
+        } else {
+          label.classList.remove('is-excluded');
+        }
+        updateStats();
+      });
+      
       list.appendChild(label);
     });
   }
@@ -342,4 +348,3 @@
 </script>
 </body>
 </html>
-
