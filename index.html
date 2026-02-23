@@ -13,7 +13,7 @@
     --bg-dark: #1e1f22;
     --card-bg: #2b2d31;
     --accent: #C5373C;
-    --line-pink: #F50057;
+    --line-pink: #F50057; 
     --text-main: #dbdee1;
     --text-sub: #b5bac1;
     --hp-red: #ff5252;
@@ -42,7 +42,9 @@
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
   .row-top { grid-template-columns: 1fr; }
   .stats-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow-x: auto; }
-  .stats-card h3 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
+  
+  /* ここの境界線の色をピンクに変更しました */
+  .stats-card h3 { border-bottom: 2px solid var(--line-pink); padding-bottom: 10px; margin-bottom: 20px; color: #fff; font-size: 1.1em; text-align: left; }
   
   table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 400px; table-layout: fixed; }
   th { padding: 10px; text-align: left; color: var(--text-sub); font-size: 0.8em; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -85,7 +87,6 @@
 </style>
 </head>
 <body>
-
 <div class="card">
   <h2>LogTool for CCFOLIA</h2>
   <p class="privacy-note">※ログはサーバーに送信されず、ブラウザ内でのみ処理されます。</p>
@@ -295,7 +296,7 @@
     const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
     const maxC = cL[0]?.[1] || 1;
     let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
-    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--line-pink)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
     document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
 
     const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
