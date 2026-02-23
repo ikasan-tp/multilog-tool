@@ -12,7 +12,7 @@
   :root {
     --bg-dark: #1e1f22;
     --card-bg: #2b2d31;
-    --accent: #F50057; /* ここを修正しました */
+    --accent: #F50057; /* 指定のピンクカラー */
     --text-main: #dbdee1;
     --text-sub: #b5bac1;
     --hp-red: #ff5252;
@@ -82,7 +82,6 @@
   .exclude-title { font-size: 0.85em; font-weight: bold; margin-bottom: 12px; color: var(--accent); }
   .exclude-list { display: flex; flex-wrap: wrap; gap: 10px; }
   .exclude-item { background: #1e1f22; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; cursor: pointer; border: 1px solid #4f545c; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-  
   .exclude-item.is-excluded { opacity: 0.4; background: #2b2d31; border-color: transparent; filter: grayscale(1); }
 
   .dice-info-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
@@ -95,3 +94,268 @@
   .mvp-cell { color: var(--text-sub); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sub-val { color: var(--text-sub); font-size: 0.85em; }
 </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>LogTool for CCFOLIA</h2>
+  <p class="privacy-note">※ログはサーバーに送信されず、ブラウザ内でのみ処理されます。</p>
+  
+  <div class="guide-container">
+    <div class="guide-header" onclick="toggleGuide()">
+      <span>📖 つかいかた</span>
+      <span id="guideArrow">▼</span>
+    </div>
+    <div class="guide-content" id="guideContent">
+      <ul style="margin:0; padding-left:20px; font-size:0.85em;">
+        <li><b>解析して統計を表示</b>：ダイス統計、HP/SAN増減、チャット数、技能ランキングを表示します。</li>
+        <li><b>会話ログを保存</b>：systemメッセージと削除済発言を消して保存します。</li>
+        <li><b>掃除済みログを保存</b>：「削除済」発言のみを消去したログを保存します。</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="file-input-area" id="dropZone">
+    <label for="logFile" style="cursor:pointer; display:block;">
+      <p id="dropText">ログファイルをドロップするか<br><span class="file-label">ファイルを選択</span></p>
+      <input type="file" id="logFile" accept=".html,.txt">
+      <div id="fileInfoBox" class="file-info-box"></div>
+    </label>
+  </div>
+
+  <div class="btn-group">
+    <button id="processBtn" class="btn" disabled>解析して統計を表示</button>
+    <button id="saveRpHtmlBtn" class="btn" style="display:none;">会話ログを保存</button>
+    <button id="downloadBtn" class="btn" style="display:none;">掃除済みログを保存</button>
+  </div>
+
+  <div id="excludeSection">
+    <div class="exclude-title">表示切り替え：</div>
+    <div id="excludeList" class="exclude-list"></div>
+  </div>
+  <div id="status" style="margin-top:15px; font-size: 0.9em; color: var(--text-sub);"></div>
+</div>
+
+<div id="statsArea">
+  <div class="stats-row row-top">
+    <div class="stats-card"><h3>🎲 ダイス統計</h3><div id="diceTableWrapper"></div></div>
+  </div>
+  <div class="stats-row">
+    <div class="stats-card"><h3>💔 HP減少ランキング</h3><div id="hpTableWrapper"></div></div>
+    <div class="stats-card"><h3>🧠 SAN減少ランキング</h3><div id="sanTableWrapper"></div></div>
+  </div>
+  <div class="stats-row">
+    <div class="stats-card"><h3>💬 チャット回数</h3><div id="chatTableWrapper"></div></div>
+    <div class="stats-card"><h3>✨ 技能使用ランキング</h3><div id="skillTableWrapper"></div></div>
+  </div>
+</div>
+
+<script>
+  function toggleGuide() {
+    const content = document.getElementById('guideContent');
+    const arrow = document.getElementById('guideArrow');
+    content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+    arrow.innerText = (content.style.display === 'block') ? '▲' : '▼';
+  }
+
+  let originalHtml = "", diceUsers = new Set(), currentFileName = "";
+  const fileInput = document.getElementById('logFile');
+  const dropZone = document.getElementById('dropZone');
+  const processBtn = document.getElementById('processBtn');
+  const fileInfoBox = document.getElementById('fileInfoBox');
+  const dropText = document.getElementById('dropText');
+
+  function handleFile(file) {
+    if (!file) return;
+    currentFileName = file.name;
+    fileInfoBox.innerText = `選択中: ${file.name}`;
+    fileInfoBox.style.display = 'block';
+    dropText.style.display = 'none';
+    processBtn.disabled = false;
+    processBtn.classList.remove('is-processed');
+    processBtn.innerText = "解析して統計を表示";
+    const reader = new FileReader();
+    reader.onload = (ev) => { originalHtml = ev.target.result; };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+
+  processBtn.addEventListener('click', function() {
+    if (!originalHtml) return;
+    extractDiceUsers(originalHtml);
+    renderExcludeToggles();
+    updateStats();
+    this.classList.add('is-processed');
+    this.innerText = "再解析する";
+    document.getElementById('excludeSection').style.display = 'block';
+    document.getElementById('statsArea').style.display = 'flex';
+    document.getElementById('downloadBtn').style.display = 'inline-block';
+    document.getElementById('saveRpHtmlBtn').style.display = 'inline-block';
+    document.getElementById('status').innerText = '解析完了 🦑';
+  });
+
+  function extractDiceUsers(html) {
+    diceUsers.clear();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.trim();
+      const dM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*?\b(CC|CCB)\b.*＞.*)/i);
+      if (dM) {
+        const name = dM[1].trim();
+        if (name.length > 0) diceUsers.add(name);
+        return;
+      }
+      const sM = text.match(/system\s*:\s*\[\s*(.*?)\s*\]\s*(.*?)\s*:\s*(\d+)\s*→\s*(\d+)/i);
+      if (sM) {
+        const name = sM[1].trim();
+        if (name.length > 0) diceUsers.add(name);
+      }
+    });
+  }
+
+  function renderExcludeToggles() {
+    const list = document.getElementById('excludeList');
+    list.innerHTML = '';
+    [...diceUsers].sort().forEach(name => {
+      const isAutoExclude = /KP|GM|キーパー|システム/i.test(name);
+      const label = document.createElement('label');
+      label.className = 'exclude-item' + (isAutoExclude ? ' is-excluded' : '');
+      label.innerHTML = `<input type="checkbox" value="${name}" ${isAutoExclude ? 'checked' : ''}> ${name}`;
+      const checkbox = label.querySelector('input');
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) { label.classList.add('is-excluded'); } else { label.classList.remove('is-excluded'); }
+        updateStats();
+      });
+      list.appendChild(label);
+    });
+  }
+
+  function updateStats() {
+    const checkedExcludes = Array.from(document.querySelectorAll('#excludeList input:checked')).map(i => i.value);
+    const dice = {}, damage = {}, chats = {}, skills = {};
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(originalHtml, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.replace(/\s+/g, ' ');
+      const cM = text.match(/\[.*?\]\s*(.*?)\s*:\s*(.*)/);
+      if (cM && !text.startsWith('system :')) {
+        const name = cM[1].trim();
+        const msg = cM[2].trim();
+        if (name.length > 0 && diceUsers.has(name) && !checkedExcludes.includes(name)) {
+          chats[name] = (chats[name] || 0) + 1;
+          const sNames = msg.match(/【(.*?)】/g);
+          if (sNames) sNames.forEach(s => {
+            const sn = s.replace(/[【】]/g, '').trim();
+            if (sn.length > 0) {
+              if (!skills[sn]) skills[sn] = { total: 0, users: {} };
+              skills[sn].total++;
+              skills[sn].users[name] = (skills[sn].users[name] || 0) + 1;
+            }
+          });
+          const diceResultMatch = msg.match(/\b(CC|CCB)\b.*＞\s*(\d+)/i);
+          if (diceResultMatch) {
+            if (!dice[name]) dice[name] = { name, total: 0, crit: 0, fum: 0, suc: 0, sumValues: 0 };
+            dice[name].total++;
+            dice[name].sumValues += parseInt(diceResultMatch[2]);
+            if (msg.match(/クリティカル|決定的成功/)) { dice[name].crit++; dice[name].suc++; }
+            else if (msg.match(/ファンブル|致命的失敗/)) { dice[name].fum++; }
+            else if (msg.match(/成功|スペシャル|イクストリーム|ハード|レギュラー/)) { dice[name].suc++; }
+          }
+        }
+      }
+      const sM = text.match(/system\s*:\s*\[\s*(.*?)\s*\]\s*(.*?)\s*:\s*(\d+)\s*→\s*(\d+)/i);
+      if (sM) {
+        const char = sM[1].trim();
+        if (char.length > 0 && diceUsers.has(char) && !checkedExcludes.includes(char)) {
+          const attr = sM[2].trim(), b = parseInt(sM[3]), a = parseInt(sM[4]);
+          if (a < b) {
+            if (!damage[char]) damage[char] = { name: char, hp: 0, san: 0 };
+            if (attr.match(/HP|耐久/i)) damage[char].hp += (b - a);
+            if (attr.match(/SAN|正気/i)) damage[char].san += (b - a);
+          }
+        }
+      }
+    });
+    renderTables(Object.values(dice), Object.values(damage), chats, skills);
+  }
+
+  function renderTables(diceList, damageList, chats, skills) {
+    diceList.sort((a, b) => b.total - a.total);
+    let dH = '<table><thead><tr><th>名前</th><th style="width:75px; text-align:right;">回数</th><th class="pc-only" style="text-align:right;">平均</th><th class="pc-only" style="text-align:right;">成功率</th><th class="pc-only" style="text-align:right;">C/F</th><th class="sp-only" style="width:110px; text-align:right;">成功/C/F</th></tr></thead><tbody>';
+    diceList.forEach(s => {
+      const avg = (s.sumValues/s.total).toFixed(1);
+      dH += `<tr>
+        <td><span class="rank-name">${s.name}</span></td>
+        <td style="text-align:right;">
+          <div class="dice-count-cell">
+            <span style="font-weight:700;">${s.total}</span>
+            <span class="sp-only sp-avg-text">平均:${avg}</span>
+          </div>
+        </td>
+        <td class="pc-only" style="text-align:right;">${avg}</td>
+        <td class="pc-only" style="text-align:right;">${((s.suc/s.total)*100).toFixed(0)}%</td>
+        <td class="pc-only" style="text-align:right;"><div class="dice-badge-group"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span style="color:#4f545c">/</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
+        <td class="sp-only" style="text-align:right;"><div class="sub-val">${((s.suc/s.total)*100).toFixed(0)}%</div><div class="dice-info-row"><span class="val-unit ${s.crit>0?'c-text':'zero-text'}">${s.crit}</span><span class="val-unit ${s.fum>0?'f-text':'zero-text'}">${s.fum}</span></div></td>
+      </tr>`;
+    });
+    document.getElementById('diceTableWrapper').innerHTML = diceList.length ? dH + '</tbody></table>' : '<p>なし</p>';
+
+    ['hp', 'san'].forEach(type => {
+      const filtered = damageList.filter(d => d[type] > 0).sort((a, b) => b[type] - a[type]);
+      const wrap = document.getElementById(type + 'TableWrapper');
+      if (!filtered.length) { wrap.innerHTML = '<p>なし</p>'; return; }
+      const max = filtered[0][type], color = type === 'hp' ? 'var(--hp-red)' : 'var(--san-blue)';
+      let h = `<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">減少量</th></tr></thead><tbody>`;
+      filtered.forEach(d => h += `<tr><td><span class="rank-name">${d.name}</span><div class="bar-container"><div class="bar-fill" style="width:${(d[type]/max*100)}%; background:${color}"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="color:${color}; font-weight:800;">-${d[type]}</span></td></tr>`);
+      wrap.innerHTML = h + '</tbody></table>';
+    });
+
+    const cL = Object.entries(chats).sort((a, b) => b[1] - a[1]);
+    const maxC = cL[0]?.[1] || 1;
+    let cH = '<table><thead><tr><th>名前</th><th style="width:60px; text-align:right;">回数</th></tr></thead><tbody>';
+    cL.forEach(([n, c]) => cH += `<tr><td><span class="rank-name">${n}</span><div class="bar-container"><div class="bar-fill" style="width:${(c/maxC*100)}%; background:var(--text-sub)"></div></div></td><td style="text-align:right; vertical-align:top;"><span style="font-weight:800;">${c}</span></td></tr>`);
+    document.getElementById('chatTableWrapper').innerHTML = cL.length ? cH + '</tbody></table>' : '<p>なし</p>';
+
+    const sL = Object.entries(skills).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+    let sH = '<table><thead><tr><th>技能</th><th class="pc-only">最多使用者</th><th style="width:50px; text-align:right;">回数</th></tr></thead><tbody>';
+    sL.forEach(([n, data]) => {
+      const topUser = Object.entries(data.users).sort((a, b) => b[1] - a[1])[0][0];
+      sH += `<tr>
+        <td><span class="skill-tag">${n}</span><div class="mvp-cell sp-only">${topUser}</div></td>
+        <td class="pc-only"><span class="mvp-cell">${topUser}</span></td>
+        <td style="text-align:right; font-weight:700;">${data.total}</td>
+      </tr>`;
+    });
+    document.getElementById('skillTableWrapper').innerHTML = sL.length ? sH + '</tbody></table>' : '<p>なし</p>';
+  }
+
+  function saveBlob(content, suffix) {
+    const blob = new Blob([content], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = currentFileName.replace(/\.[^/.]+$/, "") + suffix;
+    a.click();
+  }
+
+  document.getElementById('saveRpHtmlBtn').addEventListener('click', () => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(originalHtml, 'text/html');
+    doc.querySelectorAll('p').forEach(p => {
+      const text = p.innerText.trim();
+      if (text.startsWith('system :') || text.includes('削除済')) { p.remove(); }
+    });
+    saveBlob(doc.documentElement.outerHTML, "_Conversation.html");
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const cleaned = originalHtml.replace(/<p\b[^>]*>[\s\S]*?<\/p>[\r\n]*/gi, m => m.includes('削除済') ? '' : m);
+    saveBlob(cleaned, "_cleaned.html");
+  });
+</script>
+</body>
+</html>
